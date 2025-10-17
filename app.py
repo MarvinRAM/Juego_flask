@@ -171,3 +171,36 @@ def api_guess():
     else:
         new_secret()
         return jsonify({"ok": True, "correct": False, "points": session["points"], "tries": session["tries"], "message": "Incorrecto. Nuevo número generado."})
+    
+@app.post("/reiniciar")
+def reiniciar():
+    ensure_session_state()
+    session["points"] = 0
+    session["tries"] = 0
+    session["game_over"] = False
+    new_secret()
+    return redirect(url_for('index'))
+
+
+@app.post("/reset")
+def reset_game():
+    ensure_session_state()
+    session["points"] = 0
+    session["tries"] = 0
+    session["game_over"] = False
+    new_secret()
+    return redirect(url_for("index"))
+
+
+@app.post("/api/reset")
+def api_reset():
+    ensure_session_state()
+    session["points"] = 0
+    session["tries"] = 0
+    session["game_over"] = False
+    new_secret()
+    return jsonify({"ok": True, "message": "Juego reiniciado", "points": 0, "tries": 0})
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
