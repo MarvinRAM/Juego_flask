@@ -88,3 +88,54 @@ BASE_HTML = """
 </body>
 </html>
 """
+
+@app.route("/peticion", methods=["GET", "POST"])
+@app.route("/juego", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
+def index():
+    ensure_session_state()
+
+    message = ""
+    css_class = ""
+
+    if request.method == "POST" and not session.get("game_over", False):
+        raw_value = (request.form.get("user_input", "") or "").strip()
+
+        if raw_value.lower() == "terminar":
+            session["points"] = 0
+            session["tries"] = 0
+            session["game_over"] = False
+            new_secret()
+            message = "Juego terminado y reiniciado. ¡Todo a 0!"
+            css_class = "ok"
+        else:
+            try:
+                user_number = int(raw_value)
+            except Exception:
+                user_number = None
+
+            if user_number is None or not (1 <= user_number <= 100):
+                message = "Ingresa un número válido entre 1 y 100 o escribe 'terminar'."
+                css_class = "warn"
+            else:
+                session["tries"] += 1
+                secret = session.get("secret")
+
+                if user_number == secret:
+                    session["points"] += 100
+                    message = f"¡Correcto! El número era {secret}. +100 puntos. Se generó un nuevo número secreto."
+                    css_class = "ok"
+                    new_secret()
+                else:
+                    new_secret()
+                    message = "Incorrecto. Se generó un nuevo número. ¡Intenta de nuevo!"
+                    css_class = "warn"
+
+    return render_template_string(
+        BASE_HTML,
+        message=message,
+        css_class=css_class,
+        points=session.get("points", 0),
+        tries=session.get("tries", 0),
+        game_over=session.get("game_over", False),
+    )
